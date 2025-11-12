@@ -1,0 +1,97 @@
+#include <iostream>
+#include <random>
+#include <limits>
+#include <string>
+
+int get_int_input(const std::string &prompt) {
+    int value;
+    while (true) {
+        std::cout << prompt;
+        if (std::cin >> value) {
+            return value;
+        }
+        // Invalid input: clear and retry
+        std::cin.clear();
+        std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
+        std::cout << "Please enter a valid integer.\n";
+    }
+}
+
+bool ask_yes_no(const std::string &prompt) {
+    std::string line;
+    while (true) {
+        std::cout << prompt << " (y/n): ";
+        if (!(std::cin >> line)) return false;
+        if (line == "y" || line == "Y") return true;
+        if (line == "n" || line == "N") return false;
+        std::cout << "Please type 'y' or 'n'.\n";
+    }
+}
+
+void play_game(int min_value, int max_value, std::mt19937 &rng) {
+    std::uniform_int_distribution<int> dist(min_value, max_value);
+    int secret = dist(rng);
+    int attempts = 0;
+
+    std::cout << "\nI've picked a number between " << min_value << " and " << max_value << ".\n";
+    std::cout << "Try to guess it!\n";
+
+    while (true) {
+        int guess = get_int_input("Your guess: ");
+        attempts++;
+
+        if (guess < min_value || guess > max_value) {
+            std::cout << "Please guess a number within the range [" << min_value << ", " << max_value << "].\n";
+            continue;
+        }
+
+        if (guess == secret) {
+            std::cout << "Correct! You found the number in " << attempts << (attempts == 1 ? " attempt.\n" : " attempts.\n");
+            break;
+        } else if (guess < secret) {
+            std::cout << "Too low. Try a higher number.\n";
+        } else {
+            std::cout << "Too high. Try a lower number.\n";
+        }
+    }
+}
+
+int main() {
+    // Seed RNG
+    std::random_device rd;
+    std::mt19937 rng(rd());
+
+    std::cout << "=== Number Guessing Game ===\n";
+
+    bool keep_playing = true;
+    while (keep_playing) {
+        std::cout << "\nChoose difficulty:\n";
+        std::cout << "  1) Easy   (1-10)\n";
+        std::cout << "  2) Medium (1-100)\n";
+        std::cout << "  3) Hard   (1-1000)\n";
+        std::cout << "  4) Custom range\n";
+
+        int choice = get_int_input("Select 1-4: ");
+        int min_v = 1, max_v = 100;
+
+        switch (choice) {
+            case 1: min_v = 1; max_v = 10; break;
+            case 2: min_v = 1; max_v = 100; break;
+            case 3: min_v = 1; max_v = 1000; break;
+            case 4:
+                min_v = get_int_input("Enter minimum value: ");
+                max_v = get_int_input("Enter maximum value: ");
+                if (max_v < min_v) std::swap(min_v, max_v);
+                break;
+            default:
+                std::cout << "Invalid choice — defaulting to Medium (1-100).\n";
+                min_v = 1; max_v = 100;
+        }
+
+        play_game(min_v, max_v, rng);
+        keep_playing = ask_yes_no("Play again?");
+    }
+
+    std::cout << "Thanks for playing! Goodbye.\n";
+    return 0;
+}
